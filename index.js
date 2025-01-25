@@ -52,6 +52,7 @@ async function run() {
     try {
         const db = client.db("insightArc");
         const usersCollection = db.collection("users");
+        const articlesCollection = db.collection("articles");
 
         /**
          *
@@ -85,6 +86,25 @@ async function run() {
             } catch (err) {
                 res.status(500).send(err);
             }
+        });
+
+        /**
+         *
+         * Articles API
+         *
+         */
+
+        // Get all articles
+        app.get("/articles", async (req, res) => {
+            const articles = await articlesCollection.find().toArray();
+            res.send(articles);
+        });
+
+        // Add article
+        app.post("/articles", verifyToken, async (req, res) => {
+            const article = req.body;
+            const result = await articlesCollection.insertOne(article);
+            res.send(result);
         });
 
         // Send a ping to confirm a successful connection
