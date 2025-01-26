@@ -133,7 +133,38 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const article = await articlesCollection.findOne(query);
+
+            // Initialize viewCount if it doesn't exist
+            if (article && article.viewCount === undefined) {
+                article.viewCount = 0;
+                await articlesCollection.updateOne(query, {
+                    $set: { viewCount: 0 },
+                });
+            }
+
             res.send(article);
+        });
+
+        // Update view count
+        app.patch("/articles/:id/view", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const update = { $inc: { viewCount: 1 } };
+            const options = { returnOriginal: false };
+
+            const result = await articlesCollection.findOneAndUpdate(
+                query,
+                update,
+                options
+            );
+            if (result.value) {
+                res.status(200).json({
+                    message: "View count updated",
+                    article: result.value,
+                });
+            } else {
+                res.status(404).json({ message: "Article not found" });
+            }
         });
 
         // Add article
