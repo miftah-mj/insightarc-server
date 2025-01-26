@@ -133,15 +133,6 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const article = await articlesCollection.findOne(query);
-
-            // Initialize viewCount if it doesn't exist
-            if (article && article.viewCount === undefined) {
-                article.viewCount = 0;
-                await articlesCollection.updateOne(query, {
-                    $set: { viewCount: 0 },
-                });
-            }
-
             res.send(article);
         });
 
@@ -165,6 +156,14 @@ async function run() {
             } else {
                 res.status(404).json({ message: "Article not found" });
             }
+        });
+
+        // GET all premium articles
+        app.get("/premium-articles", async (req, res) => {
+            const articles = await articlesCollection
+                .find({ isPremium: true })
+                .toArray();
+            res.send(articles);
         });
 
         // Add article
