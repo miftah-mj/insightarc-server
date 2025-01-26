@@ -125,7 +125,15 @@ async function run() {
                     title: { $regex: searchTerm, $options: "i" },
                 })
                 .toArray();
-            res.json(articles);
+            res.send(articles);
+        });
+
+        // Get article by id
+        app.get("/articles/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const article = await articlesCollection.findOne(query);
+            res.send(article);
         });
 
         // Add article
