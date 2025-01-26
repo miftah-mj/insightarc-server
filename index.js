@@ -11,7 +11,7 @@ const app = express();
 
 // middleware
 const corsOptions = {
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "http://localhost:5176"],
     credentials: true,
     optionSuccessStatus: 200,
 };
@@ -93,8 +93,15 @@ async function run() {
          * Users API
          *
          */
+
+        // Get all users data
+        app.get("/users", verifyToken, async (req, res) => {
+            const users = await usersCollection.find().toArray();
+            res.send(users);
+        });
+
         // Save or update user data in the database
-        app.post("/users/:email", async (req, res) => {
+        app.post("/users/:email", verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const user = req.body;
@@ -143,7 +150,7 @@ async function run() {
             const update = { $inc: { viewCount: 1 } };
             const options = { returnOriginal: false };
 
-            const result = await articlesCollection.findOneAndUpdate(
+            const result = await articlesCollection.updateOne(
                 query,
                 update,
                 options
@@ -159,15 +166,23 @@ async function run() {
         });
 
         // GET all premium articles
-        app.get("/premium-articles", async (req, res) => {
+        app.get("/premium-articles", verifyToken, async (req, res) => {
             const articles = await articlesCollection
                 .find({ isPremium: true })
                 .toArray();
             res.send(articles);
         });
 
+        // GET all articles by user
+        app.get("/user-articles", verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const query = { "user.email": email };
+            const articles = await articlesCollection.find(query).toArray();
+            res.send(articles);
+        });
+
         // Add article
-        app.post("/articles", async (req, res) => {
+        app.post("/articles", verifyToken, async (req, res) => {
             const article = req.body;
             const result = await articlesCollection.insertOne(article);
             res.send(result);
