@@ -117,14 +117,19 @@ async function run() {
          *
          */
 
-        // Get all articles
+        // Get all articles & search articles
         app.get("/articles", async (req, res) => {
-            const articles = await articlesCollection.find().toArray();
-            res.send(articles);
+            const searchTerm = req.query.search || "";
+            const articles = await articlesCollection
+                .find({
+                    title: { $regex: searchTerm, $options: "i" },
+                })
+                .toArray();
+            res.json(articles);
         });
 
         // Add article
-        app.post("/articles", verifyToken, async (req, res) => {
+        app.post("/articles", async (req, res) => {
             const article = req.body;
             const result = await articlesCollection.insertOne(article);
             res.send(result);
