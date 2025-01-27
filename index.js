@@ -11,7 +11,7 @@ const app = express();
 
 // middleware
 const corsOptions = {
-    origin: ["http://localhost:5173", "http://localhost:5176"],
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
     optionSuccessStatus: 200,
 };
@@ -23,6 +23,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 const verifyToken = async (req, res, next) => {
+    // console.log(req.cookies);
     const token = req.cookies?.token;
 
     if (!token) {
@@ -94,14 +95,54 @@ async function run() {
          *
          */
 
-        // Get all users data
-        app.get("/users", verifyToken, async (req, res) => {
-            const users = await usersCollection.find().toArray();
+        // // Get all users data
+        // app.get("/all-users", verifyToken, async (req, res) => {
+        //     const users = await usersCollection.find().toArray();
+        //     res.send(users);
+        // });
+
+        // Get all users data except the current user
+        app.get("/all-users/:email", verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const query = { email: { $ne: email } };
+            const users = await usersCollection.find(query).toArray();
             res.send(users);
         });
 
+        // Update user role and status
+        app.patch("/users/role/:email", verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const { role } = req.body;
+            const filter = { email };
+
+            const updateDoc = {
+                $set: {
+                    role,
+                    status: "verified",
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+        // Get user role
+        app.get("/users/role/:email", verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ role: user?.role });
+        });
+
+        // // GET current user data
+        // app.get("/users/me", verifyToken, async (req, res) => {
+        //     const email = req.user;
+        //     const query = { email: email };
+        //     const user = await usersCollection.findOne(query);
+        //     res.send(user);
+        // });
+
         // Save or update user data in the database
-        app.post("/users/:email", verifyToken, async (req, res) => {
+        app.post("/users/:email", async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const user = req.body;
@@ -114,9 +155,24 @@ async function run() {
                 ...user,
                 role: "user",
                 timestamp: Date.now(),
+                userHasSubscription: false,
             });
             res.send(result);
         });
+
+        // // Update urrent user data
+        // app.patch("/users/me", verifyToken, async (req, res) => {
+        //     const email = req.user;
+        //     const query = { email };
+        //     const update = { $set: req.body };
+        //     const options = { returnOriginal: false };
+        //     const result = await usersCollection.findOneAndUpdate(
+        //         query,
+        //         update,
+        //         options
+        //     );
+        //     res.send(result.value);
+        // });
 
         /**
          *
@@ -155,7 +211,7 @@ async function run() {
                 update,
                 options
             );
-            if (result.value) {
+            if (result) {
                 res.status(200).json({
                     message: "View count updated",
                     article: result.value,
