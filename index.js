@@ -182,13 +182,12 @@ async function run() {
          * Articles API
          *
          */
-
         // Get all articles & search articles
         app.get("/articles", async (req, res) => {
             const searchTerm = req.query.search || "";
             const articles = await articlesCollection
                 .find({
-                    title: { $regex: searchTerm, $options: "i" },
+                    title: { $regex: searchTerm, $options: "i" }, // case-insensitive
                 })
                 .toArray();
             res.send(articles);
@@ -211,6 +210,26 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const article = await articlesCollection.findOne(query);
             res.send(article);
+        });
+
+        // Update the status of a article and make premium field true
+        app.patch("/articles/:id", verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const { status, isPremium } = req.body;
+
+            const filter = { _id: new ObjectId(id) };
+
+            const updateDoc = {
+                $set: {
+                    status,
+                    isPremium,
+                },
+            };
+            const result = await articlesCollection.updateOne(
+                filter,
+                updateDoc
+            );
+            res.send(result);
         });
 
         // Update view count
@@ -255,6 +274,14 @@ async function run() {
         app.post("/articles", verifyToken, async (req, res) => {
             const article = req.body;
             const result = await articlesCollection.insertOne(article);
+            res.send(result);
+        });
+
+        // DELETE article by id
+        app.delete("/articles/:id", verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await articlesCollection.deleteOne(query);
             res.send(result);
         });
 
