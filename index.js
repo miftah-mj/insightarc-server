@@ -58,6 +58,7 @@ async function run() {
         const db = client.db("insightArc");
         const usersCollection = db.collection("users");
         const articlesCollection = db.collection("articles");
+        const publishersCollection = db.collection("publishers");
 
         /**
          *
@@ -176,6 +177,24 @@ async function run() {
         //     );
         //     res.send(result.value);
         // });
+
+        /**
+         *
+         * Publisher API
+         *
+         */
+        // Add a publisher
+        app.post("/publishers", async (req, res) => {
+            const publisher = req.body;
+            const result = await publishersCollection.insertOne(publisher);
+            res.send(result);
+        });
+
+        // Get all publishers
+        app.get("/publishers", async (req, res) => {
+            const publishers = await publishersCollection.find().toArray();
+            res.send(publishers);
+        });
 
         /**
          *
