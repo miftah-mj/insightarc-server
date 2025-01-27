@@ -11,7 +11,11 @@ const app = express();
 
 // middleware
 const corsOptions = {
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://insightarc-2d4c8.web.app",
+    ],
     credentials: true,
     optionSuccessStatus: 200,
 };
@@ -118,7 +122,6 @@ async function run() {
             const updateDoc = {
                 $set: {
                     role,
-                    status: "verified",
                 },
             };
             const result = await usersCollection.updateOne(filter, updateDoc);
@@ -187,6 +190,17 @@ async function run() {
                 .find({
                     title: { $regex: searchTerm, $options: "i" },
                 })
+                .toArray();
+            res.send(articles);
+        });
+
+        // GET 6 trending articles
+        app.get("/trending-articles", async (req, res) => {
+            // sort by view count in descending order
+            const articles = await articlesCollection
+                .find()
+                .sort({ viewCount: -1 })
+                .limit(6)
                 .toArray();
             res.send(articles);
         });
