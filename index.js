@@ -59,6 +59,7 @@ async function run() {
         const usersCollection = db.collection("users");
         const articlesCollection = db.collection("articles");
         const publishersCollection = db.collection("publishers");
+        const subscriptionsCollection = db.collection("subscriptions");
 
         /**
          *
@@ -68,6 +69,7 @@ async function run() {
         // Generate jwt token
         app.post("/jwt", async (req, res) => {
             const email = req.body;
+            console.log(email);
             const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
                 expiresIn: "365d",
             });
@@ -82,12 +84,18 @@ async function run() {
         app.get("/logout", async (req, res) => {
             try {
                 res.clearCookie("token", {
-                    maxAge: 0,
+                    httpOnly: true,
                     secure: process.env.NODE_ENV === "production",
                     sameSite:
                         process.env.NODE_ENV === "production"
                             ? "none"
                             : "strict",
+                    // maxAge: 0,
+                    // secure: process.env.NODE_ENV === "production",
+                    // sameSite:
+                    //     process.env.NODE_ENV === "production"
+                    //         ? "none"
+                    //         : "strict",
                 }).send({ success: true });
             } catch (err) {
                 res.status(500).send(err);
@@ -304,6 +312,19 @@ async function run() {
             res.send(result);
         });
 
+        /***
+         *
+         * Subscriptions API
+         *
+         */
+        // Get all subscriptions
+        app.get("/subscriptions", async (req, res) => {
+            const subscriptions = await subscriptionsCollection
+                .find()
+                .toArray();
+            res.send(subscriptions);
+        });
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log(
@@ -317,7 +338,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-    res.send("Welcome to InsightArc Server");
+    res.send("Welcome to InsightArc Server.....😊📰");
 });
 
 app.listen(port, () => {
