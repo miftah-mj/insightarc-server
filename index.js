@@ -240,6 +240,19 @@ async function run() {
             res.send(articles);
         });
 
+        // Get current user articles
+        app.get("/my-articles/:email", verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const query = { "author.email": email }; // Assuming articles have an author field with an email
+            try {
+                const articles = await articlesCollection.find(query).toArray();
+                res.send(articles);
+            } catch (error) {
+                console.error("Error fetching articles:", error);
+                res.status(500).send("Error fetching articles");
+            }
+        });
+
         // Get article by id
         app.get("/articles/:id", async (req, res) => {
             const id = req.params.id;
