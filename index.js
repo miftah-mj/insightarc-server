@@ -219,10 +219,23 @@ async function run() {
          *
          */
         // Get all articles & search articles
+
         app.get("/articles", async (req, res) => {
             const searchTerm = req.query.search || "";
             const articles = await articlesCollection
                 .find({
+                    title: { $regex: searchTerm, $options: "i" }, // case-insensitive
+                })
+                .toArray();
+            res.send(articles);
+        });
+
+        // Get all approved articles  & search articles
+        app.get("/approved-articles", async (req, res) => {
+            const searchTerm = req.query.search || "";
+            const articles = await articlesCollection
+                .find({
+                    status: "approved",
                     title: { $regex: searchTerm, $options: "i" }, // case-insensitive
                 })
                 .toArray();
