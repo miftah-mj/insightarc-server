@@ -109,7 +109,7 @@ async function run() {
          */
 
         // Get all users data
-        app.get("/all-users", verifyToken, async (req, res) => {
+        app.get("/all-users", async (req, res) => {
             const users = await usersCollection.find().toArray();
             res.send(users);
         });
