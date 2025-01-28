@@ -108,11 +108,11 @@ async function run() {
          *
          */
 
-        // // Get all users data
-        // app.get("/all-users", verifyToken, async (req, res) => {
-        //     const users = await usersCollection.find().toArray();
-        //     res.send(users);
-        // });
+        // Get all users data
+        app.get("/all-users", verifyToken, async (req, res) => {
+            const users = await usersCollection.find().toArray();
+            res.send(users);
+        });
 
         // Get all users data except the current user
         app.get("/all-users/:email", verifyToken, async (req, res) => {
@@ -120,6 +120,14 @@ async function run() {
             const query = { email: { $ne: email } };
             const users = await usersCollection.find(query).toArray();
             res.send(users);
+        });
+
+        // Get user data by email
+        app.get("/users/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send(user);
         });
 
         // Update user role and status
@@ -168,6 +176,7 @@ async function run() {
                 role: "user",
                 timestamp: Date.now(),
                 userHasSubscription: false,
+                premiumTaken: "",
             });
             res.send(result);
         });
@@ -323,6 +332,42 @@ async function run() {
                 .find()
                 .toArray();
             res.send(subscriptions);
+        });
+
+        // Get a subscription by id
+        app.get("/subscriptions/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const subscription = await subscriptionsCollection.findOne(query);
+            res.send(subscription);
+        });
+
+        // Add a subscription
+        app.post("/update-subscription", verifyToken, async (req, res) => {
+            const { userId, subscriptionPeriod } = req.body;
+            console.log(userId, subscriptionPeriod);
+
+            try {
+                const filter = { _id: new ObjectId(userId) };
+                const updateDoc = {
+                    $set: {
+                        userHasSubscription: true,
+                        premiumTaken: subscriptionPeriod,
+                    },
+                };
+
+                const result = await usersCollection.updateOne(
+                    filter,
+                    updateDoc
+                );
+                console.log(
+                    `Successfully updated the document with the _id: ${result}`
+                );
+                res.send(result);
+            } catch (error) {
+                console.error("Error updating subscription:", error);
+                res.status(500).send("Error updating subscription");
+            }
         });
 
         // Send a ping to confirm a successful connection
