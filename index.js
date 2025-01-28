@@ -114,6 +114,26 @@ async function run() {
             res.send(users);
         });
 
+        // Count all users, normal users, and premium users
+        app.get("/users-stat", async (req, res) => {
+            try {
+                const totalUsers = await usersCollection.countDocuments();
+                const premiumUsers = await usersCollection.countDocuments({
+                    userHasSubscription: true,
+                });
+                const normalUsers = totalUsers - premiumUsers;
+
+                res.send({
+                    totalUsers,
+                    normalUsers,
+                    premiumUsers,
+                });
+            } catch (error) {
+                console.error("Error counting users:", error);
+                res.status(500).send("Error counting users");
+            }
+        });
+
         // Get all users data except the current user
         app.get("/all-users/:email", verifyToken, async (req, res) => {
             const email = req.params.email;
@@ -313,6 +333,35 @@ async function run() {
                 });
             } else {
                 res.status(404).json({ message: "Article not found" });
+            }
+        });
+
+        // Update article
+        app.put("/articles/:id", verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const { title, description } = req.body;
+
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    title,
+                    description,
+                },
+            };
+
+            try {
+                const result = await articlesCollection.updateOne(
+                    filter,
+                    updateDoc
+                );
+                if (result.modifiedCount === 1) {
+                    res.send({ message: "Article updated successfully" });
+                } else {
+                    res.status(404).send({ message: "Article not found" });
+                }
+            } catch (error) {
+                console.error("Error updating article:", error);
+                res.status(500).send("Error updating article");
             }
         });
 
