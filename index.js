@@ -239,13 +239,23 @@ async function run() {
          *
          */
         // Get all articles & search articles
-
         app.get("/articles", async (req, res) => {
             const searchTerm = req.query.search || "";
             const articles = await articlesCollection
                 .find({
                     title: { $regex: searchTerm, $options: "i" }, // case-insensitive
                 })
+                .toArray();
+            res.send(articles);
+        });
+
+        // Get all Latest articles
+        app.get("/latest-articles", async (req, res) => {
+            // sort by timestamp in descending order
+            const articles = await articlesCollection
+                .find()
+                .sort({ timestamp: -1 })
+                .limit(4)
                 .toArray();
             res.send(articles);
         });
